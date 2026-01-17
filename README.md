@@ -1,16 +1,49 @@
-# aptka
 
-A new Flutter project.
+APTKA_301_ABDUL
 
-## Getting Started
+APLIKASI PEMESANAN TIKET KERETA API
+🚆 APTKA - Aplikasi Pemesanan Tiket Kereta Api
 
-This project is a starting point for a Flutter application.
+APTKA adalah aplikasi mobile berbasis Flutter yang dirancang untuk memudahkan pengguna dalam memesan tiket kereta api, mengecek rute, serta mendapatkan informasi wisata di sekitar stasiun pemberhentian.
 
-A few resources to get you started if this is your first Flutter project:
+Aplikasi ini dikembangkan untuk memenuhi tugas pemrograman mobile dengan fokus pada implementasi REST API, Firebase, dan Deployment Multi-platform (Android & PWA).
+✨ Fitur Unggulan
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Aplikasi ini memiliki lebih dari 7 Halaman Dinamis dengan transisi animasi yang halus:
+1. 🎫 Pemesanan Tiket Cerdas (Booking System)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+    Pencarian jadwal kereta berdasarkan stasiun asal, tujuan, dan tanggal.
+    Pemilihan kursi interaktif.
+    Ringkasan pemesanan dan e-ticket.
+
+2. 🔐 Autentikasi Pengguna (Firebase Auth)
+
+    Register & Login yang aman menggunakan Email/Password.
+    Penyimpanan profil pengguna terintegrasi dengan Firebase.
+
+3. 🗺️ Peta Jalur Kereta (Interactive Map)
+
+    Visualisasi jalur kereta api yang tersedia.
+    Integrasi peta untuk melihat lokasi stasiun secara real-time.
+
+4. 🚉 Informasi Rute & Jadwal
+
+    Detail lengkap mengenai rute perjalanan.
+    Estimasi waktu kedatangan dan keberangkatan.
+
+5. 🏞️ Explore Daerah (Station Guide)
+
+    Informasi unik mengenai daerah/kota yang disinggahi kereta.
+    Rekomendasi tempat wisata atau kuliner di dekat stasiun (menggunakan data API).
+
+👨‍💻 Pengembang
+
+Dibuat oleh M. ABDUL RAFI MUHBAB
+
+    NIM: 23552011301
+    Kelas: CNS
+
+GENERATIVE AI IS USED IN THIS DEVELOPMENT
+
+PADA BEBERAPA BAGIAN, AKU MENGGUNAKAN LAPTOP MOCHAMAD ALPIN DIKARENAKAN PUNYAKU RUSAK, DAN DI PUSH KE GITHUB DENGAN AKU ALPHIN, NAMUN PENGEMBANGAN TETAP DILAKUKAN OLEH ABDUL
+
