@@ -8,7 +8,7 @@ class DashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("APTKA"),
+        title: const Text("APTKA", style: TextStyle(color: Colors.white)),
         actions: [
           // 1. Keranjang
           _buildAppBarButton(
