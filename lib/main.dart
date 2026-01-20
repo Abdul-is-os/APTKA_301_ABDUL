@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'ui/dashboard.dart';
-
+import 'ui/login.dart';
+//json-server --watch assets/db.json --port 3000 --host 0.0.0.0 untuk jalanin database
 void main() {
   runApp(const MyApp());
 }
@@ -28,7 +29,7 @@ class MyApp extends StatelessWidget {
           surface: Color(0xFF2C2C2C),
         ),
       ),
-      home: const DashboardPage(),
+      home: const LoginPage(),
     );
   }
 }

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'cari_tiket.dart';
 
 class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
+  final bool isGuest;
+  const DashboardPage({super.key, this.isGuest = false});
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +71,37 @@ class DashboardPage extends StatelessWidget {
                     icon: Icons.train, 
                     color: const Color(0xFFD32F2F), 
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const CariTiketPage()));
+                      if (isGuest) {
+                        // JIKA TAMU: Tampilkan peringatan
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: const Color(0xFF2C2C2C),
+                            title: const Text("Akses Dibatasi", style: TextStyle(color: Colors.white)),
+                            content: const Text("Anda harus login untuk memesan tiket.", style: TextStyle(color: Colors.white70)),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context), 
+                                child: const Text("Batal")
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context); // Tutup dialog
+                                  Navigator.pop(context); // Kembali ke Login Page (karena kita pakai pushReplacement sebelumnya)
+                                },
+                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6D00)),
+                                child: const Text("Login Sekarang"),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else {
+                        // JIKA MEMBER: Lanjut ke halaman cari tiket
+                        Navigator.push(
+                          context, 
+                          MaterialPageRoute(builder: (context) => const CariTiketPage())
+                        );
+                      }
                     }
                   ),
                   const SizedBox(width: 20),
