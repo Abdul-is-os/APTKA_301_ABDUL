@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import Auth untuk cek status login
+import '../service/booking_service.dart';
+import 'dashboard.dart';
+import 'login.dart';
 
 class PemesananPage extends StatefulWidget {
-  final Map<String, dynamic> tiket; // Data tiket yang dipilih dari halaman sebelumnya
+  final Map<String, dynamic> tiket;
 
   const PemesananPage({super.key, required this.tiket});
 
@@ -10,163 +14,230 @@ class PemesananPage extends StatefulWidget {
 }
 
 class _PemesananPageState extends State<PemesananPage> {
-  // Controller untuk input text
-  final TextEditingController _idController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  
+  // Controller Input Data
+  final TextEditingController _ktpController = TextEditingController();
   final TextEditingController _namaController = TextEditingController();
-  String _tipePenumpang = 'Dewasa'; // Default value dropdown
+  String _tipePenumpang = 'Dewasa';
+  
+  bool _isLoading = false;
 
-  @override
-  Widget build(BuildContext context) {
-    // Palet Warna
-    final Color bgColor = const Color(0xFF1E1E1E);
-    final Color fieldColor = const Color(0xFF2C2C2C);
-    final Color orangeColor = const Color(0xFFFF6D00);
-
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
-        title: const Text("Pemesanan"),
-        backgroundColor: bgColor,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Info Singkat Tiket (Opsional, agar user tau apa yang dipesan)
-            Container(
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.only(bottom: 24),
-              decoration: BoxDecoration(
-                color: fieldColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: orangeColor.withOpacity(0.5)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.train, color: orangeColor),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(widget.tiket['nama_kereta'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      Text("${widget.tiket['jam_berangkat']} - ${widget.tiket['jam_tiba']}", style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                    ],
-                  )
-                ],
-              ),
+  void _prosesPesanan() async {
+    // 1. CEK APAKAH USER TAMU ATAU MEMBER?
+    User? user = FirebaseAuth.instance.currentUser;
+    
+    if (user == null) {
+      // JIKA TAMU: Tampilkan Dialog Blokir
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF2C2C2C),
+          title: const Text("Akses Dibatasi", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          content: const Text(
+            "Maaf, Anda harus login terlebih dahulu untuk melakukan pemesanan tiket.", 
+            style: TextStyle(color: Colors.white70)
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context), 
+              child: const Text("Batal", style: TextStyle(color: Colors.grey))
             ),
-
-            // --- FORM INPUT PENUMPANG ---
-            
-            // 1. ID Penumpang
-            _buildLabel("ID Penumpang"),
-            _buildTextField(
-              controller: _idController,
-              hint: "Masukkan No. KTP / ID",
-              fieldColor: fieldColor,
-            ),
-            
-            const SizedBox(height: 16),
-
-            // 2. Nama Penumpang
-            _buildLabel("Nama Penumpang"),
-            _buildTextField(
-              controller: _namaController,
-              hint: "Masukkan Nama Lengkap",
-              fieldColor: fieldColor,
-            ),
-
-            const SizedBox(height: 16),
-
-            // 3. Tipe Penumpang (Dropdown)
-            _buildLabel("Tipe Penumpang"),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: fieldColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white10),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // Tutup Dialog
+                // Arahkan ke Login Page
+                Navigator.pushReplacement(
+                  context, 
+                  MaterialPageRoute(builder: (context) => const LoginPage())
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6D00),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _tipePenumpang,
-                  dropdownColor: const Color(0xFF333333),
-                  isExpanded: true,
-                  icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                  items: ['Dewasa', 'Anak-anak', 'Lansia'].map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      _tipePenumpang = newValue!;
-                    });
-                  },
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 40),
-
-            // 4. Tombol Pilih Kursi
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Logika lanjut nanti (misal simpan ke database atau pilih kursi)
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Fitur Denah Kursi akan dibuat selanjutnya"))
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: fieldColor, // Menggunakan warna gelap sesuai referensi
-                  side: const BorderSide(color: Colors.white24), // Border tipis
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text(
-                  "Pilih Kursi",
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
+              child: const Text("Login Sekarang", style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
-      ),
-    );
-  }
+      );
+      return; // Stop proses di sini, jangan lanjut ke booking
+    }
 
-  // Widget Helper Label
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0, left: 4),
-      child: Text(text, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-    );
-  }
+    // 2. JIKA MEMBER (SUDAH LOGIN): Lanjut Validasi Form
+    if (!_formKey.currentState!.validate()) return;
 
-  // Widget Helper Text Field
-  Widget _buildTextField({required TextEditingController controller, required String hint, required Color fieldColor}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: fieldColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: TextField(
-        controller: controller,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey.withOpacity(0.5), fontWeight: FontWeight.normal),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    setState(() => _isLoading = true);
+
+    try {
+      // Panggil Service untuk simpan ke Firebase (Kursi dipilih otomatis oleh sistem)
+      await BookingService().buatPesanan(
+        detailTiket: widget.tiket,
+        namaPenumpang: _namaController.text,
+        noIdentitas: _ktpController.text,
+        tipePenumpang: _tipePenumpang,
+      );
+
+      if (!mounted) return;
+
+      // Tampilkan Sukses
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Tiket Berhasil Dipesan! Cek di Dashboard."), 
+          backgroundColor: Colors.green
         ),
+      );
+      
+      // Kembali ke Dashboard dan hapus history navigasi sebelumnya
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardPage(isGuest: false)),
+        (route) => false,
+      );
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gagal memesan: $e"), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF1E1E1E),
+      appBar: AppBar(
+        title: const Text("Isi Data Penumpang"),
+        backgroundColor: const Color(0xFF1E1E1E),
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- KARTU INFO KERETA ---
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2C2C2C),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFF6D00).withOpacity(0.5)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.train, color: Color(0xFFFF6D00), size: 32),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.tiket['nama_kereta'] ?? 'Kereta', 
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "${widget.tiket['jam_berangkat']} - ${widget.tiket['jam_tiba']}", 
+                            style: const TextStyle(color: Colors.grey)
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4)
+                            ),
+                            child: const Text(
+                              "Kursi: Auto-Assign (Sistem)", 
+                              style: TextStyle(color: Colors.orange, fontSize: 12)
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              const Text("Detail Penumpang", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+
+              // --- FORM INPUT ---
+              // Input No Identitas
+              TextFormField(
+                controller: _ktpController,
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.number,
+                decoration: _inputDecoration("No. KTP / ID"),
+                validator: (val) => val!.isEmpty ? "Nomor identitas wajib diisi" : null,
+              ),
+              const SizedBox(height: 16),
+
+              // Input Nama Lengkap
+              TextFormField(
+                controller: _namaController,
+                style: const TextStyle(color: Colors.white),
+                decoration: _inputDecoration("Nama Lengkap"),
+                validator: (val) => val!.isEmpty ? "Nama lengkap wajib diisi" : null,
+              ),
+              const SizedBox(height: 16),
+
+              // Dropdown Tipe Penumpang
+              DropdownButtonFormField<String>(
+                value: _tipePenumpang,
+                dropdownColor: const Color(0xFF2C2C2C),
+                style: const TextStyle(color: Colors.white),
+                decoration: _inputDecoration("Tipe Penumpang"),
+                items: ['Dewasa', 'Anak-anak', 'Lansia'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                onChanged: (val) => setState(() => _tipePenumpang = val!),
+              ),
+
+              const SizedBox(height: 40),
+
+              // --- TOMBOL PESAN ---
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _prosesPesanan,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF6D00),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: _isLoading 
+                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text(
+                        "Bayar & Pesan Tiket", 
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.grey),
+      filled: true,
+      fillColor: const Color(0xFF2C2C2C),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8), 
+        borderSide: const BorderSide(color: Color(0xFFFF6D00))
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../service/authentication.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -8,7 +9,74 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  // Controller Input
+  final TextEditingController _namaController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPassController = TextEditingController();
+
+  final AuthService _authService = AuthService();
+  bool _isLoading = false;
   bool _isPasswordVisible = false;
+
+  void _handleRegister() async {
+    // 1. Validasi Input
+    if (_namaController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _phoneController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Semua kolom wajib diisi!")),
+      );
+      return;
+    }
+
+    if (_passwordController.text != _confirmPassController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Password konfirmasi tidak cocok!")),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 2. Panggil Service SignUp
+      await _authService.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        nama: _namaController.text.trim(),
+        telepon: _phoneController.text.trim(),
+      );
+
+      if (mounted) {
+        // 3. Berhasil
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Colors.green,
+            content: Text("Registrasi Berhasil! Silakan Login."),
+          ),
+        );
+        Navigator.pop(context); // Kembali ke Login Page
+      }
+    } catch (e) {
+      // 4. Gagal
+      if (mounted) {
+        String msg = "Terjadi Kesalahan: $e";
+        if (e.toString().contains("email-already-in-use")) {
+          msg = "Email sudah terdaftar!";
+        } else if (e.toString().contains("weak-password")) {
+          msg = "Password terlalu lemah (min 6 karakter)";
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(backgroundColor: Colors.red, content: Text(msg)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +101,8 @@ class _RegisterPageState extends State<RegisterPage> {
           children: [
             const Text(
               "Buat Akun Baru",
-              style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -42,37 +111,57 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 40),
 
-            _buildTextField(label: "Nama Lengkap", icon: Icons.person, fieldColor: fieldColor),
+            _buildTextField(
+                controller: _namaController,
+                label: "Nama Lengkap",
+                icon: Icons.person,
+                fieldColor: fieldColor),
             const SizedBox(height: 16),
-            _buildTextField(label: "Email", icon: Icons.email, fieldColor: fieldColor),
+            _buildTextField(
+                controller: _emailController,
+                label: "Email",
+                icon: Icons.email,
+                fieldColor: fieldColor),
             const SizedBox(height: 16),
-            _buildTextField(label: "Nomor Telepon", icon: Icons.phone, fieldColor: fieldColor),
+            _buildTextField(
+                controller: _phoneController,
+                label: "Nomor Telepon",
+                icon: Icons.phone,
+                fieldColor: fieldColor),
             const SizedBox(height: 16),
-            _buildTextField(label: "Password", icon: Icons.lock, fieldColor: fieldColor, isPassword: true),
+            _buildTextField(
+                controller: _passwordController,
+                label: "Password",
+                icon: Icons.lock,
+                fieldColor: fieldColor,
+                isPassword: true),
             const SizedBox(height: 16),
-            _buildTextField(label: "Konfirmasi Password", icon: Icons.lock_outline, fieldColor: fieldColor, isPassword: true),
-
+            _buildTextField(
+                controller: _confirmPassController,
+                label: "Konfirmasi Password",
+                icon: Icons.lock_outline,
+                fieldColor: fieldColor,
+                isPassword: true),
+            
             const SizedBox(height: 40),
 
             SizedBox(
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: () {
-                  // Simulasi daftar sukses
-                  Navigator.pop(context); // Kembali ke Login
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Akun berhasil dibuat! Silakan login.")),
-                  );
-                },
+                onPressed: _isLoading ? null : _handleRegister,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: orangeColor,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text(
-                  "DAFTAR",
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("DAFTAR",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -82,6 +171,7 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildTextField({
+    required TextEditingController controller,
     required String label,
     required IconData icon,
     required Color fieldColor,
@@ -95,6 +185,7 @@ class _RegisterPageState extends State<RegisterPage> {
         border: Border.all(color: Colors.white10),
       ),
       child: TextField(
+        controller: controller,
         obscureText: isPassword ? !_isPasswordVisible : false,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
@@ -105,9 +196,10 @@ class _RegisterPageState extends State<RegisterPage> {
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
-                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                    color: Colors.grey,
-                  ),
+                      _isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: Colors.grey),
                   onPressed: () {
                     setState(() {
                       _isPasswordVisible = !_isPasswordVisible;

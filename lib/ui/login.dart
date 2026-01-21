@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'register.dart';
+import '../service/authentication.dart';
 import 'dashboard.dart';
+import 'register.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -10,14 +11,60 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  // Controller Input
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  
+  final AuthService _authService = AuthService();
+  bool _isLoading = false;
   bool _isPasswordVisible = false;
 
-  void _login(bool isGuest) {
-    // Navigasi ke Dashboard
-    // Kita kirim parameter 'isGuest' agar Dashboard tahu status user
+  void _handleLogin() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Email dan Password harus diisi!")),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 1. Panggil Service Login
+      await _authService.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      if (mounted) {
+        // 2. Sukses -> Masuk Dashboard (Member)
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const DashboardPage(isGuest: false)),
+        );
+      }
+    } catch (e) {
+      // 3. Gagal
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Colors.red,
+            content: Text("Login Gagal! Periksa email dan password Anda."),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _guestLogin() {
+    // Masuk Dashboard sebagai Tamu
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => DashboardPage(isGuest: isGuest)),
+      MaterialPageRoute(
+          builder: (context) => const DashboardPage(isGuest: true)),
     );
   }
 
@@ -36,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // --- LOGO / ICON ---
+              // Logo
               Icon(Icons.train, size: 80, color: orangeColor),
               const SizedBox(height: 16),
               const Text(
@@ -56,51 +103,58 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 48),
 
-              // --- FORM INPUT ---
+              // Form Input
               _buildTextField(
-                label: "Email / Username",
-                icon: Icons.person_outline,
-                fieldColor: fieldColor,
-                isPassword: false,
-              ),
+                  controller: _emailController,
+                  label: "Email",
+                  icon: Icons.email_outlined,
+                  fieldColor: fieldColor,
+                  isPassword: false),
               const SizedBox(height: 16),
               _buildTextField(
-                label: "Password",
-                icon: Icons.lock_outline,
-                fieldColor: fieldColor,
-                isPassword: true,
-              ),
+                  controller: _passwordController,
+                  label: "Password",
+                  icon: Icons.lock_outline,
+                  fieldColor: fieldColor,
+                  isPassword: true),
 
               const SizedBox(height: 24),
 
-              // --- TOMBOL LOGIN ---
+              // Tombol Login
               SizedBox(
                 height: 55,
                 child: ElevatedButton(
-                  onPressed: () => _login(false), // false = User Login Beneran
+                  onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: orangeColor,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     elevation: 2,
                   ),
-                  child: const Text(
-                    "MASUK",
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          "MASUK",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              // --- TOMBOL TAMU (GUEST) ---
+              // Tombol Tamu
               SizedBox(
                 height: 55,
                 child: OutlinedButton(
-                  onPressed: () => _login(true), // true = Tamu
+                  onPressed: _guestLogin,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
                     side: const BorderSide(color: Colors.white24),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text("Masuk sebagai Tamu"),
                 ),
@@ -108,18 +162,24 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 32),
 
-              // --- LINK REGISTER ---
+              // Link Daftar
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Belum punya akun? ", style: TextStyle(color: Colors.grey)),
+                  const Text("Belum punya akun? ",
+                      style: TextStyle(color: Colors.grey)),
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterPage()));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const RegisterPage()),
+                      );
                     },
                     child: Text(
                       "Daftar Sekarang",
-                      style: TextStyle(color: orangeColor, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: orangeColor, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -132,6 +192,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildTextField({
+    required TextEditingController controller,
     required String label,
     required IconData icon,
     required Color fieldColor,
@@ -145,6 +206,7 @@ class _LoginPageState extends State<LoginPage> {
         border: Border.all(color: Colors.white10),
       ),
       child: TextField(
+        controller: controller,
         obscureText: isPassword ? !_isPasswordVisible : false,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
@@ -155,7 +217,9 @@ class _LoginPageState extends State<LoginPage> {
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
-                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    _isPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
                     color: Colors.grey,
                   ),
                   onPressed: () {

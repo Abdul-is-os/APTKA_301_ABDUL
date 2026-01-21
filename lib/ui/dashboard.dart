@@ -1,249 +1,357 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import '../service/booking_service.dart';
 import 'cari_tiket.dart';
+import 'login.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   final bool isGuest;
   const DashboardPage({super.key, this.isGuest = false});
 
   @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  final User? user = FirebaseAuth.instance.currentUser;
+
+  // --- LOGIKA LOGOUT ---
+  void _handleLogout() async {
+    if (!widget.isGuest) {
+      await FirebaseAuth.instance.signOut();
+    }
+    if (mounted) {
+      Navigator.pushReplacement(
+        context, 
+        MaterialPageRoute(builder: (context) => const LoginPage())
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Warna Background Utama Gelap
+    final Color bgColor = const Color(0xFF1E1E1E);
+
     return Scaffold(
+      backgroundColor: bgColor,
+      // --- APP BAR CUSTOM SESUAI GAMBAR ---
       appBar: AppBar(
-        title: const Text("APTKA", style: TextStyle(color: Colors.white)),
+        automaticallyImplyLeading: false,
+        backgroundColor: bgColor,
+        elevation: 0,
+        title: const Text(
+          "APTKA", 
+          style: TextStyle(
+            color: Colors.white, 
+            fontWeight: FontWeight.bold, 
+            letterSpacing: 1.5,
+            fontSize: 22
+          )
+        ),
         actions: [
-          // 1. Keranjang
-          _buildAppBarButton(
-            icon: Icons.shopping_cart_outlined,
-            onTap: () {},
+          // Ikon Keranjang
+          IconButton(
+            icon: const Icon(Icons.shopping_cart_outlined, color: Colors.white),
+            onPressed: () {},
           ),
-          // 2. Akun
-          _buildAppBarButton(
-            icon: Icons.person,
-            onTap: () {},
-          ),
-          // 3. Pengaturan
-          _buildAppBarButton(
-            icon: Icons.settings,
-            onTap: () {},
-          ),
-          const SizedBox(width: 16),
+          // Tombol AKUN (Pill Shape)
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0, left: 8.0),
+            child: OutlinedButton(
+              onPressed: _handleLogout, // Klik Akun untuk Logout/Login
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              child: Text(
+                widget.isGuest ? "LOGIN" : "AKUN", 
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
+              ),
+            ),
+          )
         ],
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // HERO BANNER
+            // --- 1. BANNER PROMO ---
             Container(
-              height: 180,
-              width: double.infinity,
               margin: const EdgeInsets.all(16),
+              height: 140,
+              width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFF333333),
+                color: const Color(0xFF2C2C2C),
                 borderRadius: BorderRadius.circular(12),
-                image: const DecorationImage(
-                  image: NetworkImage("https://via.placeholder.com/600x300/333333/FFFFFF?text=PETA+JARINGAN+KERETA"),
-                  fit: BoxFit.cover,
-                ),
               ),
-              child: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.map, size: 40, color: Colors.grey),
-                    SizedBox(height: 8),
-                    Text("PETA JARINGAN KERETA / BANNER PROMO", style: TextStyle(color: Colors.grey)),
-                  ],
-                ),
-              ),
-            ),
-
-            // MENU GRID (HORIZONTAL SCROLL)
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildMenuButton(
-                    context, 
-                    title: "Tiket KA\nAntarkota", 
-                    icon: Icons.train, 
-                    color: const Color(0xFFD32F2F), 
-                    onTap: () {
-                      if (isGuest) {
-                        // JIKA TAMU: Tampilkan peringatan
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: const Color(0xFF2C2C2C),
-                            title: const Text("Akses Dibatasi", style: TextStyle(color: Colors.white)),
-                            content: const Text("Anda harus login untuk memesan tiket.", style: TextStyle(color: Colors.white70)),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context), 
-                                child: const Text("Batal")
-                              ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context); // Tutup dialog
-                                  Navigator.pop(context); // Kembali ke Login Page (karena kita pakai pushReplacement sebelumnya)
-                                },
-                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6D00)),
-                                child: const Text("Login Sekarang"),
-                              ),
-                            ],
-                          ),
-                        );
-                      } else {
-                        // JIKA MEMBER: Lanjut ke halaman cari tiket
-                        Navigator.push(
-                          context, 
-                          MaterialPageRoute(builder: (context) => const CariTiketPage())
-                        );
-                      }
-                    }
-                  ),
-                  const SizedBox(width: 20),
-                  _buildMenuButton(context, title: "Kargo &\nEkspedisi", icon: Icons.inventory_2, color: Colors.orange),
-                  const SizedBox(width: 20),
-                  _buildMenuButton(context, title: "Peta\nLintas", icon: Icons.map, color: Colors.blue),
-                  const SizedBox(width: 20),
-                  _buildMenuButton(context, title: "Jadwal\nKereta", icon: Icons.schedule, color: Colors.grey),
-                  const SizedBox(width: 20),
-                  _buildMenuButton(context, title: "Jelajah\nKota", icon: Icons.location_on, color: Colors.amber),
-                  const SizedBox(width: 20),
-                  _buildMenuButton(context, title: "Tiket\nSaya", icon: Icons.confirmation_number, color: Colors.green),
+                  const Icon(Icons.map_outlined, size: 48, color: Colors.grey),
+                  const SizedBox(height: 8),
+                  Text(
+                    "PETA JARINGAN KERETA / BANNER PROMO",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  )
                 ],
               ),
             ),
 
-            const SizedBox(height: 30),
+            // --- 2. MENU IKON WARNA-WARNI (Horizontal Scroll) ---
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Menu 1: Tiket KA (Merah) -> Navigasi ke Cari Tiket
+                  _buildMenuItem(
+                    icon: Icons.train, 
+                    color: Colors.red, 
+                    label: "Tiket KA\nAntarkota",
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CariTiketPage())),
+                  ),
+                  // Menu 2: Kargo (Oranye)
+                  _buildMenuItem(icon: Icons.inventory_2, color: Colors.orange, label: "Kargo &\nEkspedisi"),
+                  // Menu 3: Peta (Biru)
+                  _buildMenuItem(icon: Icons.map, color: Colors.blue, label: "Peta\nLintas"),
+                  // Menu 4: Jadwal (Abu)
+                  _buildMenuItem(icon: Icons.schedule, color: Colors.grey, label: "Jadwal\nKereta"),
+                  // Menu 5: Jelajah (Kuning)
+                  _buildMenuItem(icon: Icons.place, color: Colors.amber, label: "Jelajah\nKota"),
+                  // Menu 6: Tiket Saya (Hijau)
+                  _buildMenuItem(icon: Icons.confirmation_number, color: Colors.green, label: "Tiket\nSaya"),
+                ],
+              ),
+            ),
 
-            // TIKET AKTIF
+            const SizedBox(height: 24),
+
+            // --- 3. JUDUL TIKET AKTIF ---
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text("Tiket Aktif:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                "Tiket Aktif:",
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // --- 4. LOGIKA TIKET (STREAM BUILDER) ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: widget.isGuest 
+                ? _buildGuestMessage() 
+                : StreamBuilder<QuerySnapshot>(
+                    stream: BookingService().getTiketAktif(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return _buildEmptyState();
+                      }
+
+                      // Tampilan List Tiket (Vertikal agar muat banyak info)
+                      return ListView.builder(
+                        shrinkWrap: true, // Agar bisa di dalam SingleChildScrollView
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: snapshot.data!.docs.length,
+                        itemBuilder: (context, index) {
+                          var data = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+                          return _buildTicketCard(data);
+                        },
+                      );
+                    },
+                  ),
             ),
             
-            _buildActiveTicketCard(),
-            const SizedBox(height: 100),
+            // Tambahan ruang di bawah agar tidak mentok
+            const SizedBox(height: 40),
           ],
         ),
       ),
     );
   }
 
-  // Widget Tombol Bulat AppBar
-  Widget _buildAppBarButton({required IconData icon, required VoidCallback onTap}) {
-    return Container(
-      margin: const EdgeInsets.only(left: 8),
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 1.5),
-      ),
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        icon: Icon(icon, size: 20, color: Colors.white),
-        onPressed: onTap,
-        splashRadius: 20,
+  // --- WIDGET PENDUKUNG ---
+
+  // 1. Item Menu Ikon
+  Widget _buildMenuItem({
+    required IconData icon, 
+    required Color color, 
+    required String label,
+    VoidCallback? onTap
+  }) {
+    return GestureDetector(
+      onTap: onTap ?? () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Fitur ini sedang dalam pengembangan"))
+        );
+      },
+      child: Container(
+        width: 70, // Lebar item
+        margin: const EdgeInsets.only(right: 12),
+        child: Column(
+          children: [
+            Container(
+              height: 50, width: 50,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: Colors.white, size: 28),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 11),
+              maxLines: 2,
+            )
+          ],
+        ),
       ),
     );
   }
 
-  // Widget Menu Kotak
-  Widget _buildMenuButton(BuildContext context, {required String title, required IconData icon, required Color color, VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
+  // 2. Kartu Tiket (Desain disesuaikan agar compact di dashboard)
+  Widget _buildTicketCard(Map<String, dynamic> data) {
+    final detail = data['detail_tiket'];
+    final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2C),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))
+        ]
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 55,
-            height: 55,
-            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: Colors.white, size: 28),
+          // Header: Nama Kereta & Status
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                detail['nama_kereta'], 
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(4)
+                ),
+                child: const Text("AKTIF", style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
+              )
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: Colors.white70))
+          const Divider(color: Colors.white10, height: 20),
+          
+          // Body: Jam & Rute
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Berangkat
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(detail['kode_asal'], style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text(detail['jam_berangkat'], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              // Panah
+              const Icon(Icons.arrow_forward, color: Colors.grey, size: 16),
+              // Tiba
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(detail['kode_tujuan'], style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text(detail['jam_tiba'], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // Footer: Kursi & Harga
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(8)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.chair, color: Colors.orange, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      "${data['penumpang']['kursi_otomatis']}", 
+                      style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)
+                    ),
+                  ],
+                ),
+                Text(
+                  currency.format(detail['harga']), 
+                  style: const TextStyle(color: Colors.white70, fontSize: 12)
+                ),
+              ],
+            ),
+          )
         ],
       ),
     );
   }
 
-  // Widget Kartu Tiket
-  Widget _buildActiveTicketCard() {
+  // 3. State Kosong
+  Widget _buildEmptyState() {
     return Container(
-      margin: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 40),
       decoration: BoxDecoration(
         color: const Color(0xFF2C2C2C),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white10),
       ),
-      child: Column(
+      child: const Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: const BoxDecoration(
-              color: Color(0xFF383838),
-              borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("SEL, 14 OKT 2026", style: TextStyle(fontWeight: FontWeight.bold)),
-                Text("KODE: BOOK-12345", style: TextStyle(color: Colors.grey)),
-              ],
+          Icon(Icons.confirmation_number_outlined, size: 48, color: Colors.white24),
+          SizedBox(height: 12),
+          Text("Belum ada tiket aktif", style: TextStyle(color: Colors.white54)),
+        ],
+      ),
+    );
+  }
+
+  // 4. Pesan Guest
+  Widget _buildGuestMessage() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2C),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withOpacity(0.3))
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.lock_outline, color: Colors.orange),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              "Login untuk melihat tiket aktif Anda.", 
+              style: TextStyle(color: Colors.white70)
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.train, color: Color(0xFFFF6D00), size: 20),
-                    SizedBox(width: 8),
-                    Text("ARGO PARAHYANGAN", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("08:30", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                        Text("BANDUNG (BD)", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        const Text("3j 15m", style: TextStyle(color: Color(0xFFFF6D00), fontSize: 12)),
-                        Icon(Icons.arrow_forward, color: Colors.grey.shade600),
-                      ],
-                    ),
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text("11:45", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                        Text("GAMBIR (GMR)", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      ],
-                    ),
-                    Container(
-                      height: 50,
-                      width: 50,
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-                      child: const Icon(Icons.qr_code_2, color: Colors.black, size: 40),
-                    )
-                  ],
-                ),
-              ],
-            ),
-          )
         ],
       ),
     );

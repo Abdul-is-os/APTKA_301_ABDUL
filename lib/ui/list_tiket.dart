@@ -23,250 +23,206 @@ class HasilPencarianPage extends StatefulWidget {
 
 class _HasilPencarianPageState extends State<HasilPencarianPage> {
   final ApiService _apiService = ApiService();
-  late DateTime _currentDate;
-  List<Map<String, dynamic>> _hasilPencarian = [];
+  List<Map<String, dynamic>> _listJadwal = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _currentDate = widget.tanggal;
     _cariJadwal();
   }
 
-  // Fungsi ambil data
   void _cariJadwal() async {
     setState(() => _isLoading = true);
     try {
-      // Kita panggil API. 
-      // Catatan: Karena mock data kita jadwal harian (tidak ada tanggal spesifik),
-      // hasil returnya akan sama setiap hari. Tapi UI tanggalnya akan berubah.
-      final hasil = await _apiService.cariTiket(widget.asal, widget.tujuan);
-      
-      // Simulasi delay sedikit biar berasa loading
-      await Future.delayed(const Duration(milliseconds: 500)); 
+      // --- PERBAIKAN UTAMA DI SINI ---
+      // Mengirim 3 parameter wajib: asal, tujuan, DAN tanggal
+      final hasil = await _apiService.cariTiket(
+        widget.asal,
+        widget.tujuan,
+        widget.tanggal,
+      );
 
-      if (mounted) {
-        setState(() {
-          _hasilPencarian = hasil;
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _listJadwal = hasil;
+        _isLoading = false;
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
-      }
+      print("Error pencarian jadwal: $e");
+      setState(() => _isLoading = false);
     }
-  }
-
-  // Fungsi Ganti Tanggal
-  void _gantiTanggal(int days) {
-    setState(() {
-      _currentDate = _currentDate.add(Duration(days: days));
-    });
-    // Refresh data setiap ganti tanggal
-    _cariJadwal();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Warna latar belakang gelap
     final Color bgColor = const Color(0xFF1E1E1E);
-    final Color cardColor = const Color(0xFF2C2C2C);
-    final Color orangeColor = const Color(0xFFFF6D00);
 
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
+        iconTheme: const IconThemeData(color: Colors.white),
         title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Pilih Kereta", style: TextStyle( color: Colors.white, fontSize: 16)),
             Text(
-              "${widget.asal} > ${widget.tujuan}",
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              "${widget.asal} → ${widget.tujuan}",
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            Text(
+              DateFormat('dd MMMM yyyy').format(widget.tanggal),
+              style: const TextStyle(fontSize: 12, color: Colors.white70),
             ),
           ],
         ),
         backgroundColor: bgColor,
         elevation: 0,
-        centerTitle: true,
       ),
-      body: Column(
-        children: [
-          // --- 1. DATE NAVIGATION BAR ---
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            color: bgColor,
-            child: Row(
-              children: [
-                // Tombol Previous (-)
-                _buildDateButton("-", () => _gantiTanggal(-1)),
-                
-                const SizedBox(width: 12),
-                
-                // Teks Tanggal Tengah
-                Expanded(
-                  child: Container(
-                    height: 45,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white24),
-                      borderRadius: BorderRadius.circular(12),
-                      color: cardColor,
-                    ),
-                    child: Text(
-                      DateFormat('d MMM').format(_currentDate),
-                      style: const TextStyle(
-                        color: Colors.white, 
-                        fontWeight: FontWeight.bold, 
-                        fontSize: 16
-                      ),
-                    ),
-                  ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF6D00)))
+          : _listJadwal.isEmpty
+              ? _buildEmptyState()
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _listJadwal.length,
+                  itemBuilder: (context, index) {
+                    final tiket = _listJadwal[index];
+                    return _buildTicketCard(tiket);
+                  },
                 ),
+    );
+  }
 
-                const SizedBox(width: 12),
-
-                // Tombol Next (+)
-                _buildDateButton("+", () => _gantiTanggal(1)),
-              ],
-            ),
-          ),
-
-          // --- 2. LIST HASIL PENCARIAN ---
-          Expanded(
-            child: _isLoading
-                ? Center(child: CircularProgressIndicator(color: orangeColor))
-                : _hasilPencarian.isEmpty
-                    ? const Center(child: Text("Tidak ada jadwal tersedia", style: TextStyle(color: Colors.grey)))
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: _hasilPencarian.length,
-                        itemBuilder: (context, index) {
-                          final tiket = _hasilPencarian[index];
-                          return _buildTicketCard(tiket, cardColor, orangeColor);
-                        },
-                      ),
+  // Tampilan jika tidak ada tiket ditemukan
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.search_off, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          Text(
+            "Tidak ada jadwal kereta tersedia\nuntuk rute dan tanggal ini.",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey[400]),
           ),
         ],
       ),
     );
   }
 
-  // Widget Tombol Tanggal (+ / -)
-  Widget _buildDateButton(String text, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 60,
-        height: 45,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.white24),
-          borderRadius: BorderRadius.circular(12),
-          color: const Color(0xFF2C2C2C),
-        ),
-        child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-      ),
-    );
-  }
-
   // Widget Kartu Tiket
-  Widget _buildTicketCard(Map<String, dynamic> tiket, Color cardColor, Color orangeColor) {
+  Widget _buildTicketCard(Map<String, dynamic> tiket) {
+    final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cardColor,
+        color: const Color(0xFF2C2C2C),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white10),
       ),
-      child: Row(
+      child: Column(
         children: [
-          // Bagian Kiri: Info Perjalanan
-          Expanded(
-            flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Nama Kereta & Kelas
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        tiket['nama_kereta'],
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const Text("Ekonomi", style: TextStyle(color: Colors.grey, fontSize: 10)),
-                  ],
+          // Baris Atas: Nama Kereta & Harga
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                tiket['nama_kereta'] ?? 'Kereta',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
-                const SizedBox(height: 12),
-                
-                // Jam & Rute
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Berangkat
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(tiket['jam_berangkat'], style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                        Text(widget.asal, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                      ],
-                    ),
-                    
-                    // Panah
-                    Icon(Icons.arrow_forward, color: orangeColor, size: 18),
-                    
-                    // Tiba
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(tiket['jam_tiba'], style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                        Text(widget.tujuan, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                      ],
-                    ),
-                  ],
+              ),
+              Text(
+                currency.format(tiket['harga'] ?? 0),
+                style: const TextStyle(
+                  color: Color(0xFFFF6D00), // Warna Oranye Khas
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          const Divider(color: Colors.white10, height: 24),
+
+          // Baris Tengah: Jam & Stasiun
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Kolom Berangkat
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tiket['jam_berangkat'] ?? '-',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    tiket['kode_asal'] ?? '-',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+
+              // Ikon Panah / Durasi
+              const Icon(Icons.arrow_forward, color: Colors.grey, size: 16),
+
+              // Kolom Tiba
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    tiket['jam_tiba'] ?? '-',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    tiket['kode_tujuan'] ?? '-',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ],
           ),
 
-          const SizedBox(width: 12),
-          
-          // Bagian Kanan: Tombol Pilih
+          const SizedBox(height: 16),
+
+          // Tombol Pilih
           SizedBox(
-            width: 80,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PemesananPage(tiket: tiket),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: orangeColor,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                // Navigasi ke Halaman Pemesanan dengan membawa data tiket
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PemesananPage(tiket: tiket),
                   ),
-                  child: const Text(
-                    "Pilih\nKereta",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6D00),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              child: const Text(
+                "Pilih",
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold),
+              ),
             ),
-          )
+          ),
         ],
       ),
     );

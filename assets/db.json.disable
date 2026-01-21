@@ -1,0 +1,42 @@
+{
+  "stasiun": [
+    { "kode_stasiun": "AND", "nama_stasiun": "ANDIR", "kota": "ANDIR" },
+    { "kode_stasiun": "BBK", "nama_stasiun": "BABAKAN", "kota": "BABAKAN" },
+    { "kode_stasiun": "BD", "nama_stasiun": "BANDUNG", "kota": "BANDUNG" },
+    { "kode_stasiun": "DWP", "nama_stasiun": "DWIPURA", "kota": "DWIPURA" },
+    { "kode_stasiun": "GRB", "nama_stasiun": "GERBANG", "kota": "GERBANG" },
+    { "kode_stasiun": "GRG", "nama_stasiun": "GARUNG KOTA", "kota": "GARUNG" },
+    { "kode_stasiun": "IBK", "nama_stasiun": "IBUKOTA PUSAT", "kota": "IBUKOTA" },
+    { "kode_stasiun": "JTG", "nama_stasiun": "JATIROGO", "kota": "JATIROGO" },
+    { "kode_stasiun": "KLM", "nama_stasiun": "KALIMAS", "kota": "KALIMAS" },
+    { "kode_stasiun": "KLS", "nama_stasiun": "KALISETAIL", "kota": "KALISETAIL" },
+    { "kode_stasiun": "KMB", "nama_stasiun": "KEMBANG", "kota": "KEMBANG" },
+    { "kode_stasiun": "KYH", "nama_stasiun": "KAYUHITAM BARAT", "kota": "KAYUHITAM" },
+    { "kode_stasiun": "MKS", "nama_stasiun": "MARAKAS", "kota": "MARAKAS" },
+    { "kode_stasiun": "PGS", "nama_stasiun": "PAGARSIH", "kota": "IBUKOTA" },
+    { "kode_stasiun": "PLB", "nama_stasiun": "PLABUAN KOTA", "kota": "PLABUAN" },
+    { "kode_stasiun": "PRK", "nama_stasiun": "PARAKAN", "kota": "PARAKAN" },
+    { "kode_stasiun": "PWN", "nama_stasiun": "PURWANEGARA", "kota": "IBUKOTA" },
+    { "kode_stasiun": "RMB", "nama_stasiun": "REMBANG", "kota": "REMBANG" },
+    { "kode_stasiun": "SM", "nama_stasiun": "SUMBER", "kota": "SUMBER" },
+    { "kode_stasiun": "TJB", "nama_stasiun": "TANJUNG BARAT", "kota": "TANJUNG BARAT" },
+    { "kode_stasiun": "TNB", "nama_stasiun": "TANAH BARU", "kota": "DWIPURA" },
+    { "kode_stasiun": "TY", "nama_stasiun": "TAYU KOTA", "kota": "TAYU" },
+    { "kode_stasiun": "UDJ", "nama_stasiun": "UDJUNG", "kota": "UJUNG" }
+  ],
+  "kereta": [
+    { "id_kereta": "1", "nama_kereta": "Kembang Express 1" },
+    { "id_kereta": "2", "nama_kereta": "Kembang Express 2" },
+    { "id_kereta": "3", "nama_kereta": "Tayu Express" },
+    { "id_kereta": "4", "nama_kereta": "Express Barat" },
+    { "id_kereta": "5", "nama_kereta": "Parakan Express" }
+  ],
+  "jadwal": [
+    { "id_jadwal": "1", "id_kereta": "1", "kode_stasiun": "IBK", "jam_berangkat": "06:15:00", "urutan_singgah": "1", "arah": "Pergi" },
+    { "id_jadwal": "2", "id_kereta": "1", "kode_stasiun": "DWP", "jam_berangkat": "06:40:00", "urutan_singgah": "2", "arah": "Pergi" },
+    { "id_jadwal": "3", "id_kereta": "1", "kode_stasiun": "KMB", "jam_berangkat": "08:20:00", "urutan_singgah": "3", "arah": "Pergi" },
+    { "id_jadwal": "4", "id_kereta": "1", "kode_stasiun": "KMB", "jam_berangkat": "10:00:00", "urutan_singgah": "1", "arah": "Pulang" },
+    { "id_jadwal": "5", "id_kereta": "1", "kode_stasiun": "DWP", "jam_berangkat": "11:45:00", "urutan_singgah": "2", "arah": "Pulang" },
+    { "id_jadwal": "6", "id_kereta": "1", "kode_stasiun": "IBK", "jam_berangkat": "12:10:00", "urutan_singgah": "3", "arah": "Pulang" }
+  ]
+}

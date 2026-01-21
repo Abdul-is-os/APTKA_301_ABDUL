@@ -1,77 +1,63 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart'; 
 import '../model/stasiun.dart';
-import '../model/jadwal.dart';
-import '../model/kereta.dart';
+import 'package:intl/intl.dart'; // Pastikan package intl sudah diinstall
 
 class ApiService {
-  // Getter pintar untuk menentukan alamat IP
-  String get baseUrl {
-    if (kIsWeb) {
-      return "http://localhost:3000";
-    } else {
-      // Untuk Android Emulator gunakan 10.0.2.2, untuk Windows Desktop gunakan localhost
-      return "http://10.0.2.2:3000"; 
-      // Jika error di emulator, ganti return di atas jadi ip laptop: "http://192.168.1.XX:3000";
-    }
-  }
+  // GANTI URL INI nanti jika sudah deploy ke GitHub/My JSON Server
+  // Untuk sekarang (lokal), gunakan IP laptop kamu jika run di HP Android asli
+  // Atau 'http://localhost:3000' jika run di Emulator/Chrome
+  final String baseUrl = 'http://localhost:3000'; 
 
-  // Ambil Data Stasiun
+  // --- 1. AMBIL DATA STASIUN ---
   Future<List<Stasiun>> getStasiun() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/stasiun'));
+
       if (response.statusCode == 200) {
-        List<dynamic> body = jsonDecode(response.body);
-        return body.map((item) => Stasiun.fromJson(item)).toList();
+        List<dynamic> jsonResponse = jsonDecode(response.body);
+        return jsonResponse.map((data) => Stasiun.fromJson(data)).toList();
       } else {
-        throw Exception('Gagal memuat data stasiun');
+        throw Exception('Gagal memuat stasiun');
       }
     } catch (e) {
-      throw Exception('Error koneksi: $e');
+      throw Exception('Error: $e');
     }
   }
 
-  // Logika Pencarian Tiket (Gabungan 3 Endpoint)
-  Future<List<Map<String, dynamic>>> cariTiket(String asal, String tujuan) async {
+  // --- 2. CARI TIKET (Logika Baru) ---
+  Future<List<Map<String, dynamic>>> cariTiket(
+      String asal, String tujuan, DateTime tanggal) async {
     try {
-      final respAsal = await http.get(Uri.parse('$baseUrl/jadwal?kode_stasiun=$asal'));
-      final respTujuan = await http.get(Uri.parse('$baseUrl/jadwal?kode_stasiun=$tujuan'));
-      final respKereta = await http.get(Uri.parse('$baseUrl/kereta'));
+      // Ubah format tanggal dari UI (DateTime) menjadi String "YYYY-MM-DD"
+      // agar cocok dengan format di db.json (hasil generate)
+      String formattedDate = DateFormat('yyyy-MM-dd').format(tanggal);
 
-      if (respAsal.statusCode == 200 && respTujuan.statusCode == 200) {
-        List<Jadwal> listAsal = (jsonDecode(respAsal.body) as List).map((e) => Jadwal.fromJson(e)).toList();
-        List<Jadwal> listTujuan = (jsonDecode(respTujuan.body) as List).map((e) => Jadwal.fromJson(e)).toList();
-        List<Kereta> listNamaKereta = (jsonDecode(respKereta.body) as List).map((e) => Kereta.fromJson(e)).toList();
+      // Filter query params sesuai struktur JSON baru
+      final uri = Uri.parse('$baseUrl/jadwal').replace(queryParameters: {
+        'kode_asal': asal,
+        'kode_tujuan': tujuan,
+        'tanggal': formattedDate,
+      });
 
-        List<Map<String, dynamic>> hasilPencarian = [];
+      // Debugging: Print URL untuk memastikan request benar
+      print("Requesting: $uri");
 
-        for (var jAsal in listAsal) {
-          var match = listTujuan.where((jTujuan) => 
-              jTujuan.idKereta == jAsal.idKereta && 
-              jTujuan.urutanSinggah > jAsal.urutanSinggah
-          );
+      final response = await http.get(uri);
 
-          for (var jTujuan in match) {
-            var namaKereta = listNamaKereta.firstWhere(
-              (k) => k.idKereta == jAsal.idKereta, 
-              orElse: () => Kereta(idKereta: '0', namaKereta: 'Unknown')
-            ).namaKereta;
-
-            hasilPencarian.add({
-              'nama_kereta': namaKereta,
-              'jam_berangkat': jAsal.jamBerangkat,
-              'jam_tiba': jTujuan.jamBerangkat,
-              'id_kereta': jAsal.idKereta
-            });
-          }
-        }
-        return hasilPencarian;
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body);
+        
+        // Kita cast ke List<Map> agar bisa dibaca UI
+        // Karena struktur JSON sudah nested (ada gerbong di dalamnya),
+        // kita tidak perlu join manual lagi. Langsung return saja.
+        return List<Map<String, dynamic>>.from(data);
       } else {
-        throw Exception('Gagal mengambil data jadwal');
+        return [];
       }
     } catch (e) {
-      throw Exception('Error cari tiket: $e');
+      print("Error cari tiket: $e");
+      return []; // Return list kosong jika error agar aplikasi tidak crash
     }
   }
 }

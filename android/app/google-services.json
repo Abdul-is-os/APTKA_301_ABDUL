@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1065975608462",
+    "project_id": "aptka-db",
+    "storage_bucket": "aptka-db.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1065975608462:android:0821d87590c103f7d5c5df",
+        "android_client_info": {
+          "package_name": "com.example.aptka"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDo3nHwVtsB6nhqE4evEo0iZPUx-Eby6Hk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
