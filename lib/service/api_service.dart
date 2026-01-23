@@ -7,7 +7,7 @@ class ApiService {
   // GANTI URL INI nanti jika sudah deploy ke GitHub/My JSON Server
   // Untuk sekarang (lokal), gunakan IP laptop kamu jika run di HP Android asli
   // Atau 'http://localhost:3000' jika run di Emulator/Chrome
-  final String baseUrl = 'http://localhost:3000'; 
+  final String baseUrl = 'https://my-json-server.typicode.com/Abdul-is-os/APTKA_301_ABDUL/tree/main/assets';
 
   // --- 1. AMBIL DATA STASIUN ---
   Future<List<Stasiun>> getStasiun() async {
