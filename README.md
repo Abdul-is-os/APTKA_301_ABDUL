@@ -45,5 +45,6 @@ Dibuat oleh M. ABDUL RAFI MUHBAB
 
 GENERATIVE AI IS USED IN THIS DEVELOPMENT
 
-PADA BEBERAPA BAGIAN, AKU MENGGUNAKAN LAPTOP MOCHAMAD ALPIN DIKARENAKAN PUNYAKU RUSAK, DAN DI PUSH KE GITHUB DENGAN AKU ALPHIN, NAMUN PENGEMBANGAN TETAP DILAKUKAN OLEH ABDUL
+Development tetap dilakukan oleh saya, namun menggunakan laptop dari beberapa teman dan saudara, git mereka tidak bisa logout (gatau caranya :v). jadi aku jadiin akun mereka sebagai kolaborator dan push dari situ. itu mengapa ada 3 akun collaborator :3
+
 
