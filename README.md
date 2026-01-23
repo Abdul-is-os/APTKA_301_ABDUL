@@ -36,6 +36,9 @@ Aplikasi ini memiliki lebih dari 7 Halaman Dinamis dengan transisi animasi yang 
     Informasi unik mengenai daerah/kota yang disinggahi kereta.
     Rekomendasi tempat wisata atau kuliner di dekat stasiun (menggunakan data API).
 
+    Video Demo:
+    https://drive.google.com/file/d/1FUCLS_uhtggcvHkzbHZpDf8RBa3gZIo7/view?usp=drive_link
+
 👨‍💻 Pengembang
 
 Dibuat oleh M. ABDUL RAFI MUHBAB
