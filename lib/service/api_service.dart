@@ -60,4 +60,31 @@ class ApiService {
       return []; // Return list kosong jika error agar aplikasi tidak crash
     }
   }
+  // 3. Ambil Daftar Semua Kereta
+  Future<List<Map<String, dynamic>>> getDaftarKereta() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/kereta'));
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(jsonDecode(response.body));
+      } else {
+        return [];
+      }
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // 4. Ambil Jadwal Lengkap (Perhentian)
+  Future<List<Map<String, dynamic>>> getJadwalLengkap() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/jadwal'));
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(jsonDecode(response.body));
+      } else {
+        return [];
+      }
+    } catch (e) {
+      return [];
+    }
+  }
 }

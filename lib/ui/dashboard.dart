@@ -4,7 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../service/booking_service.dart';
 import 'cari_tiket.dart';
+import 'peta_lintas.dart';
+import 'jadwal_kereta.dart';
 import 'login.dart';
+import 'jelajah_kota.dart';
+import 'settings.dart';
 
 class DashboardPage extends StatefulWidget {
   final bool isGuest;
@@ -52,27 +56,20 @@ class _DashboardPageState extends State<DashboardPage> {
           )
         ),
         actions: [
-          // Ikon Keranjang
-          IconButton(
-            icon: const Icon(Icons.shopping_cart_outlined, color: Colors.white),
-            onPressed: () {},
+          // Tombol Pengturan
+                  IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Colors.white),
+            tooltip: "Pengaturan",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SettingsPage(isGuest: widget.isGuest),
+                ),
+              );
+            },
           ),
-          // Tombol AKUN (Pill Shape)
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0, left: 8.0),
-            child: OutlinedButton(
-              onPressed: _handleLogout, // Klik Akun untuk Logout/Login
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.white),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-              ),
-              child: Text(
-                widget.isGuest ? "LOGIN" : "AKUN", 
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
-              ),
-            ),
-          )
+          const SizedBox(width: 8),
         ],
       ),
       body: SingleChildScrollView(
@@ -115,16 +112,29 @@ class _DashboardPageState extends State<DashboardPage> {
                     label: "Tiket KA\nAntarkota",
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CariTiketPage())),
                   ),
-                  // Menu 2: Kargo (Oranye)
-                  _buildMenuItem(icon: Icons.inventory_2, color: Colors.orange, label: "Kargo &\nEkspedisi"),
                   // Menu 3: Peta (Biru)
-                  _buildMenuItem(icon: Icons.map, color: Colors.blue, label: "Peta\nLintas"),
+                  _buildMenuItem(
+                    icon: Icons.map, 
+                    color: Colors.blue, 
+                    label: "Peta\nLintas",
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PetaLintasPage())),
+                  ),
                   // Menu 4: Jadwal (Abu)
-                  _buildMenuItem(icon: Icons.schedule, color: Colors.grey, label: "Jadwal\nKereta"),
+                  _buildMenuItem(
+                    icon: Icons.schedule, 
+                    color: Colors.grey, 
+                    label: "Jadwal\nKereta",
+                    // TAMBAHKAN INI:
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const JadwalKeretaPage())),
+                  ),
                   // Menu 5: Jelajah (Kuning)
-                  _buildMenuItem(icon: Icons.place, color: Colors.amber, label: "Jelajah\nKota"),
-                  // Menu 6: Tiket Saya (Hijau)
-                  _buildMenuItem(icon: Icons.confirmation_number, color: Colors.green, label: "Tiket\nSaya"),
+                  _buildMenuItem(
+                    icon: Icons.place, 
+                    color: Colors.amber, 
+                    label: "Jelajah\nKota",
+                    // --- TAMBAHKAN NAVIGASI INI ---
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const JelajahKotaPage())),
+                  ),
                 ],
               ),
             ),
