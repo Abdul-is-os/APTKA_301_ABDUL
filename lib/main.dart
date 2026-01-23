@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'APTKA Train App',
+      title: 'APTKA App',
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF1E1E1E),
         primaryColor: const Color(0xFFFF6D00),

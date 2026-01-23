@@ -8,6 +8,7 @@ class BookingService {
 
   // --- 1. Fungsi Simpan Pesanan (Auto Seat) ---
   Future<void> buatPesanan({
+    required String customId,
     required Map<String, dynamic> detailTiket,
     required String namaPenumpang,
     required String noIdentitas,
@@ -15,9 +16,7 @@ class BookingService {
   }) async {
     User? user = _auth.currentUser;
     if (user == null) throw Exception("User belum login");
-
-    // LOGIKA AUTO-SEAT (Sementara)
-    // Format: G{1-4}-{1-10}{A/B} (Contoh: G1-5A)
+    // Generate Kursi Otomatis
     String gerbong = "G${Random().nextInt(4) + 1}";
     String baris = "${Random().nextInt(10) + 1}";
     String posisi = Random().nextBool() ? "A" : "B";
@@ -25,15 +24,16 @@ class BookingService {
 
     // Simpan ke Firestore
     await _firestore.collection('bookings').add({
+      'id_booking': customId,
       'userId': user.uid,
       'tanggal_pemesanan': FieldValue.serverTimestamp(),
       'status': 'Lunas', 
-      'detail_tiket': detailTiket, // Menyimpan snapshot data kereta
+      'detail_tiket': detailTiket,
       'penumpang': {
         'nama': namaPenumpang,
         'no_identitas': noIdentitas,
         'tipe': tipePenumpang,
-        'kursi_otomatis': kursiOtomatis // Kursi hasil generate
+        'kursi_otomatis': kursiOtomatis
       },
     });
   }

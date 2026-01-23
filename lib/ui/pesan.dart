@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'tiket.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Auth untuk cek status login
 import '../service/booking_service.dart';
 import 'dashboard.dart';
 import 'login.dart';
+import 'dart:math';
 
 class PemesananPage extends StatefulWidget {
   final Map<String, dynamic> tiket;
@@ -28,7 +30,7 @@ class _PemesananPageState extends State<PemesananPage> {
     User? user = FirebaseAuth.instance.currentUser;
     
     if (user == null) {
-      // JIKA TAMU: Tampilkan Dialog Blokir
+
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -70,13 +72,25 @@ class _PemesananPageState extends State<PemesananPage> {
     setState(() => _isLoading = true);
 
     try {
+
+      String bookingId = "TRX-${Random().nextInt(9000) + 1000}";
       // Panggil Service untuk simpan ke Firebase (Kursi dipilih otomatis oleh sistem)
       await BookingService().buatPesanan(
+        customId: bookingId,
         detailTiket: widget.tiket,
         namaPenumpang: _namaController.text,
         noIdentitas: _ktpController.text,
         tipePenumpang: _tipePenumpang,
       );
+      Map<String, dynamic> tiketData = {
+        'id_booking': bookingId,
+        'detail_tiket': widget.tiket,
+        'penumpang': {
+          'nama': _namaController.text,
+          'tipe': _tipePenumpang,
+          'kursi_otomatis': 'Auto-Assign' // Di halaman tiket nanti akan terisi/bisa diupdate
+        }
+      };
 
       if (!mounted) return;
 
@@ -89,10 +103,11 @@ class _PemesananPageState extends State<PemesananPage> {
       );
       
       // Kembali ke Dashboard dan hapus history navigasi sebelumnya
-      Navigator.pushAndRemoveUntil(
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const DashboardPage(isGuest: false)),
-        (route) => false,
+        MaterialPageRoute(
+          builder: (context) => TiketPage(bookingData: tiketData),
+        ),
       );
 
     } catch (e) {

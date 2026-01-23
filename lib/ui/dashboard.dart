@@ -149,6 +149,30 @@ class _DashboardPageState extends State<DashboardPage> {
                 : StreamBuilder<QuerySnapshot>(
                     stream: BookingService().getTiketAktif(),
                     builder: (context, snapshot) {
+                      // --- KODE DEBUGGING MULAI ---
+                      print("--- DEBUGGING DASHBOARD ---");
+                      print("1. Status Koneksi: ${snapshot.connectionState}");
+                      print("2. User ID Login: ${FirebaseAuth.instance.currentUser?.uid}");
+                      
+                      if (snapshot.hasError) {
+                        print("❌ ERROR FIREBASE: ${snapshot.error}");
+                        return Text("Error: ${snapshot.error}");
+                      }
+
+                      if (!snapshot.hasData) {
+                        print("⚠️ Belum ada data snapshot (Loading...)");
+                      } else {
+                        print("✅ Data Diterima! Jumlah Dokumen: ${snapshot.data!.docs.length}");
+                        if (snapshot.data!.docs.isNotEmpty) {
+                          // Cek data pertama untuk memastikan UID-nya benar
+                          var docPertama = snapshot.data!.docs[0].data() as Map<String, dynamic>;
+                          print("📄 Contoh Data Tiket: $docPertama");
+                          print("🔍 UID di Tiket: ${docPertama['userId']}");
+                        }
+                      }
+                      print("---------------------------");
+                      // --- KODE DEBUGGING SELESAI ---
+
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
                       }
@@ -157,9 +181,8 @@ class _DashboardPageState extends State<DashboardPage> {
                         return _buildEmptyState();
                       }
 
-                      // Tampilan List Tiket (Vertikal agar muat banyak info)
                       return ListView.builder(
-                        shrinkWrap: true, // Agar bisa di dalam SingleChildScrollView
+                        shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: snapshot.data!.docs.length,
                         itemBuilder: (context, index) {
