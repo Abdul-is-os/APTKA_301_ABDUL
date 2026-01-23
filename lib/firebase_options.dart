@@ -77,4 +77,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'aptka-db.firebasestorage.app',
     iosBundleId: 'com.example.aptka',
   );
+
 }

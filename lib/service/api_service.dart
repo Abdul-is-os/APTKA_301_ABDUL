@@ -1,90 +1,92 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../model/stasiun.dart';
-import 'package:intl/intl.dart'; // Pastikan package intl sudah diinstall
+import 'package:intl/intl.dart'; 
 
 class ApiService {
-  // GANTI URL INI nanti jika sudah deploy ke GitHub/My JSON Server
-  // Untuk sekarang (lokal), gunakan IP laptop kamu jika run di HP Android asli
-  // Atau 'http://localhost:3000' jika run di Emulator/Chrome
-  final String baseUrl = 'https://my-json-server.typicode.com/Abdul-is-os/APTKA_301_ABDUL/tree/main/assets';
+  // 1. URL RAW (Wajib pakai ini agar tidak kena limit 10KB)
+  final String rawUrl = 'https://raw.githubusercontent.com/Abdul-is-os/APTKA_301_ABDUL/refs/heads/main/db.json';
 
-  // --- 1. AMBIL DATA STASIUN ---
+  // Cache penyimpanan data agar aplikasi cepat (tidak download berulang)
+  Map<String, dynamic>? _localCache;
+
+  // Fungsi internal untuk mengambil seluruh database
+  Future<Map<String, dynamic>> _fetchWholeDb() async {
+    // Jika data sudah ada di memori, pakai yang ada (hemat kuota)
+    if (_localCache != null) return _localCache!;
+
+    try {
+      final response = await http.get(Uri.parse(rawUrl));
+      if (response.statusCode == 200) {
+        _localCache = jsonDecode(response.body);
+        return _localCache!;
+      } else {
+        throw Exception('Gagal mengambil database');
+      }
+    } catch (e) {
+      print("Error fetching Raw DB: $e");
+      return {};
+    }
+  }
+
+  // --- 2. GET STASIUN ---
   Future<List<Stasiun>> getStasiun() async {
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/stasiun'));
-
-      if (response.statusCode == 200) {
-        List<dynamic> jsonResponse = jsonDecode(response.body);
-        return jsonResponse.map((data) => Stasiun.fromJson(data)).toList();
-      } else {
-        throw Exception('Gagal memuat stasiun');
-      }
-    } catch (e) {
-      throw Exception('Error: $e');
+    final db = await _fetchWholeDb();
+    if (db.containsKey('stasiun')) {
+      List data = db['stasiun'];
+      // Mapping manual untuk memastikan error handling
+      return data.map((json) => Stasiun.fromJson(json)).toList();
     }
+    return [];
   }
 
-  // --- 2. CARI TIKET (Logika Baru) ---
-  Future<List<Map<String, dynamic>>> cariTiket(
-      String asal, String tujuan, DateTime tanggal) async {
-    try {
-      // Ubah format tanggal dari UI (DateTime) menjadi String "YYYY-MM-DD"
-      // agar cocok dengan format di db.json (hasil generate)
-      String formattedDate = DateFormat('yyyy-MM-dd').format(tanggal);
+  // --- 3. CARI TIKET (Logika Diperbaiki) ---
+  // Kita kembalikan parameter ke DateTime agar UI tidak Error
+  Future<List<Map<String, dynamic>>> cariTiket(String asal, String tujuan, DateTime tanggal) async {
+    final db = await _fetchWholeDb();
+    
+    // Cek apakah ada data jadwal
+    if (!db.containsKey('jadwal')) return [];
 
-      // Filter query params sesuai struktur JSON baru
-      final uri = Uri.parse('$baseUrl/jadwal').replace(queryParameters: {
-        'kode_asal': asal,
-        'kode_tujuan': tujuan,
-        'tanggal': formattedDate,
-      });
+    List data = db['jadwal'];
 
-      // Debugging: Print URL untuk memastikan request benar
-      print("Requesting: $uri");
+    // Ubah DateTime dari UI menjadi String "YYYY-MM-DD" untuk pencocokan
+    String cariTanggal = DateFormat('yyyy-MM-dd').format(tanggal);
 
-      final response = await http.get(uri);
+    // Lakukan Filter Client-Side (Pengganti query parameter)
+    var hasilFilter = data.where((j) {
+      // Ambil data dari JSON (Handle null safety)
+      String jAsal = j['kode_asal'] ?? j['kode_stasiun'] ?? '';
+      String jTujuan = j['kode_tujuan'] ?? '';
+      String jTanggal = j['tanggal'] ?? '';
 
-      if (response.statusCode == 200) {
-        List<dynamic> data = jsonDecode(response.body);
-        
-        // Kita cast ke List<Map> agar bisa dibaca UI
-        // Karena struktur JSON sudah nested (ada gerbong di dalamnya),
-        // kita tidak perlu join manual lagi. Langsung return saja.
-        return List<Map<String, dynamic>>.from(data);
-      } else {
-        return [];
-      }
-    } catch (e) {
-      print("Error cari tiket: $e");
-      return []; // Return list kosong jika error agar aplikasi tidak crash
-    }
+      // LOGIKA PENCOCOKAN KETAT (Agar tidak looping/duplikat)
+      bool matchAsal = jAsal.trim().toUpperCase() == asal.trim().toUpperCase();
+      bool matchTujuan = jTujuan.trim().toUpperCase() == tujuan.trim().toUpperCase();
+      bool matchTanggal = jTanggal == cariTanggal;
+
+      // Kembalikan data HANYA JIKA ketiganya cocok
+      return matchAsal && matchTujuan && matchTanggal;
+    }).toList();
+
+    return hasilFilter.map((e) => e as Map<String, dynamic>).toList();
   }
-  // 3. Ambil Daftar Semua Kereta
+
+  // --- 4. GET DAFTAR KERETA ---
   Future<List<Map<String, dynamic>>> getDaftarKereta() async {
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/kereta'));
-      if (response.statusCode == 200) {
-        return List<Map<String, dynamic>>.from(jsonDecode(response.body));
-      } else {
-        return [];
-      }
-    } catch (e) {
-      return [];
+    final db = await _fetchWholeDb();
+    if (db.containsKey('kereta')) {
+      return List<Map<String, dynamic>>.from(db['kereta']);
     }
+    return [];
   }
 
-  // 4. Ambil Jadwal Lengkap (Perhentian)
+  // --- 5. GET JADWAL LENGKAP ---
   Future<List<Map<String, dynamic>>> getJadwalLengkap() async {
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/jadwal'));
-      if (response.statusCode == 200) {
-        return List<Map<String, dynamic>>.from(jsonDecode(response.body));
-      } else {
-        return [];
-      }
-    } catch (e) {
-      return [];
+    final db = await _fetchWholeDb();
+    if (db.containsKey('jadwal')) {
+      return List<Map<String, dynamic>>.from(db['jadwal']);
     }
+    return [];
   }
 }

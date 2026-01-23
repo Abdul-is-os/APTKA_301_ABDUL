@@ -35,12 +35,10 @@ class _HasilPencarianPageState extends State<HasilPencarianPage> {
   void _cariJadwal() async {
     setState(() => _isLoading = true);
     try {
-      // --- PERBAIKAN UTAMA DI SINI ---
-      // Mengirim 3 parameter wajib: asal, tujuan, DAN tanggal
       final hasil = await _apiService.cariTiket(
         widget.asal,
         widget.tujuan,
-        widget.tanggal,
+        widget.tanggal, 
       );
 
       setState(() {
